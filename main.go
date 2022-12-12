@@ -17,11 +17,9 @@ func main() {
 	db := database.NewPostgresDatabase(dbHost, dbPort, dbUsername, dbPassword, dbDatabase)
 
 	userRepository := repository.NewUserRepository(db)
-	userController := controller.NewUserController(&userRepository)
 	authController := controller.NewAuthController(&userRepository)
 
 	r := gin.Default()
-	userController.Route(r)
 	authController.Route(r)
 
 	r.Run(":" + os.Getenv("APP_PORT"))
