@@ -1,7 +1,26 @@
 package main
 
-import "fmt"
+import (
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/controller"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/database"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
+)
 
 func main() {
-	fmt.Println("test")
+	godotenv.Load()
+
+	dbHost, dbPort, dbUsername, dbPassword, dbDatabase := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DATABASE")
+	db := database.NewPostgresDatabase(dbHost, dbPort, dbUsername, dbPassword, dbDatabase)
+
+	userRepository := repository.NewUserRepository(db)
+	authController := controller.NewAuthController(&userRepository)
+
+	r := gin.Default()
+	authController.Route(r)
+
+	r.Run(":" + os.Getenv("APP_PORT"))
 }
