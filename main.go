@@ -1,19 +1,20 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/controller"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/database"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func main() {
-	dsn := "host=localhost user=postgres password=root dbname=ecommerce port=8081 sslmode=disable TimeZone=Asia/Jakarta"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
+	godotenv.Load()
+
+	dbHost, dbPort, dbUsername, dbPassword, dbDatabase := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DATABASE")
+	db := database.NewPostgresDatabase(dbHost, dbPort, dbUsername, dbPassword, dbDatabase)
 
 	userRepository := repository.NewUserRepository(db)
 	userController := controller.NewUserController(&userRepository)
@@ -21,5 +22,5 @@ func main() {
 	r := gin.Default()
 	userController.Route(r)
 
-	r.Run(":8080")
+	r.Run(":" + os.Getenv("APP_PORT"))
 }
