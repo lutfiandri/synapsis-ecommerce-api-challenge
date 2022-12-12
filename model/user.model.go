@@ -9,6 +9,6 @@ type User struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (u *User) TableName() string {
+func (User) TableName() string {
 	return "users"
 }
