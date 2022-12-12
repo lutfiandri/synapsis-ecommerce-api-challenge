@@ -19,8 +19,12 @@ func main() {
 	userRepository := repository.NewUserRepository(db)
 	authController := controller.NewAuthController(&userRepository)
 
+	productRepository := repository.NewProductRepository(db)
+	productController := controller.NewProductController(&productRepository)
+
 	r := gin.Default()
 	authController.Route(r)
+	productController.Route(r)
 
 	r.Run(":" + os.Getenv("APP_PORT"))
 }
