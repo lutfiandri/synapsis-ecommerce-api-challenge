@@ -31,6 +31,7 @@ func (c *cartItemController) Route(router *gin.Engine) {
 	router.POST("/cart-items", c.Create)
 	router.GET("/cart-items/", c.FindAll)
 	router.GET("/cart-items/:id", c.FindOneByID)
+	router.PUT("/cart-items/:id", c.UpdateOneByID)
 }
 
 type createRequest struct {
@@ -120,5 +121,42 @@ func (c *cartItemController) FindAll(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"cartItems": cartItems,
+	})
+}
+
+type updateOneByIdRequest struct {
+	Quantity int
+}
+
+func (c *cartItemController) UpdateOneByID(ctx *gin.Context) {
+	var cartItemRequest updateOneByIdRequest
+
+	err := ctx.BindJSON(&cartItemRequest)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	cartItem := model.CartItem{
+		Quantity: cartItemRequest.Quantity,
+	}
+
+	id := ctx.Param("id")
+	err = c.repository.UpdateOneByID(&id, &cartItem)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "CartItem not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"cartItem": cartItem,
 	})
 }

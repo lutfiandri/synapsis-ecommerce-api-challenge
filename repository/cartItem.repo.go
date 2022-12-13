@@ -9,6 +9,8 @@ type CartItemRepository interface {
 	Create(*model.CartItem) error
 	FindOneByID(*string) (model.CartItem, error)
 	FindAll() ([]model.CartItem, error)
+	UpdateOneByID(*string, *model.CartItem) error
+	// DeleteOneByID(*string) error
 }
 
 type cartItemRepository struct {
@@ -37,4 +39,16 @@ func (r *cartItemRepository) FindAll() ([]model.CartItem, error) {
 	var cartItems []model.CartItem
 	err := r.db.Preload("User").Preload("Product").Find(&cartItems).Error
 	return cartItems, err
+}
+
+func (r *cartItemRepository) UpdateOneByID(id *string, newCartItem *model.CartItem) error {
+	cartItem, err := r.FindOneByID(id)
+	if err != nil {
+		return err
+	}
+
+	cartItem.Quantity = newCartItem.Quantity
+
+	err = r.db.Save(&cartItem).Error
+	return err
 }
