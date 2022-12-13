@@ -14,6 +14,7 @@ type CartItemController interface {
 	Route(*gin.Engine)
 	Create(*gin.Context)
 	FindOneByID(*gin.Context)
+	FindAll(*gin.Context)
 }
 
 type cartItemController struct {
@@ -28,6 +29,7 @@ func NewCartItemController(repository *repository.CartItemRepository) CartItemCo
 
 func (c *cartItemController) Route(router *gin.Engine) {
 	router.POST("/cart-items", c.Create)
+	router.GET("/cart-items/", c.FindAll)
 	router.GET("/cart-items/:id", c.FindOneByID)
 }
 
@@ -98,5 +100,25 @@ func (c *cartItemController) FindOneByID(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"cartItem": cartItem,
+	})
+}
+
+func (c *cartItemController) FindAll(ctx *gin.Context) {
+	cartItems, err := c.repository.FindAll()
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "CartItem not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"cartItems": cartItems,
 	})
 }

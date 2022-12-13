@@ -8,6 +8,7 @@ import (
 type CartItemRepository interface {
 	Create(*model.CartItem) error
 	FindOneByID(*string) (model.CartItem, error)
+	FindAll() ([]model.CartItem, error)
 }
 
 type cartItemRepository struct {
@@ -30,4 +31,10 @@ func (r *cartItemRepository) FindOneByID(id *string) (model.CartItem, error) {
 	var cartItem model.CartItem
 	err := r.db.Preload("User").Preload("Product").First(&cartItem, "id = ?", id).Error
 	return cartItem, err
+}
+
+func (r *cartItemRepository) FindAll() ([]model.CartItem, error) {
+	var cartItems []model.CartItem
+	err := r.db.Preload("User").Preload("Product").Find(&cartItems).Error
+	return cartItems, err
 }
