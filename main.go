@@ -22,9 +22,13 @@ func main() {
 	productRepository := repository.NewProductRepository(db)
 	productController := controller.NewProductController(&productRepository)
 
+	cartItemRepository := repository.NewCartItemRepository(db)
+	cartItemController := controller.NewCartItemController(&cartItemRepository)
+
 	r := gin.Default()
 	authController.Route(r)
 	productController.Route(r)
+	cartItemController.Route(r)
 
 	r.Run(":" + os.Getenv("APP_PORT"))
 }
