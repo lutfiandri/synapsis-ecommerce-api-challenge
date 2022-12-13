@@ -15,6 +15,8 @@ type CartItemController interface {
 	Create(*gin.Context)
 	FindOneByID(*gin.Context)
 	FindAll(*gin.Context)
+	UpdateOneByID(*gin.Context)
+	DeleteOneByID(*gin.Context)
 }
 
 type cartItemController struct {
@@ -32,6 +34,7 @@ func (c *cartItemController) Route(router *gin.Engine) {
 	router.GET("/cart-items/", c.FindAll)
 	router.GET("/cart-items/:id", c.FindOneByID)
 	router.PUT("/cart-items/:id", c.UpdateOneByID)
+	router.DELETE("/cart-items/:id", c.DeleteOneByID)
 }
 
 type createRequest struct {
@@ -173,4 +176,23 @@ func (c *cartItemController) UpdateOneByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"cartItem": cartItem,
 	})
+}
+
+func (c *cartItemController) DeleteOneByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := c.repository.DeleteOneByID(&id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Cart Item not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }

@@ -10,7 +10,7 @@ type CartItemRepository interface {
 	FindOneByID(*string) (model.CartItem, error)
 	FindAll() ([]model.CartItem, error)
 	UpdateOneByID(*string, *model.CartItem) error
-	// DeleteOneByID(*string) error
+	DeleteOneByID(*string) error
 }
 
 type cartItemRepository struct {
@@ -50,5 +50,15 @@ func (r *cartItemRepository) UpdateOneByID(id *string, newCartItem *model.CartIt
 	cartItem.Quantity = newCartItem.Quantity
 
 	err = r.db.Save(&cartItem).Error
+	return err
+}
+
+func (r *cartItemRepository) DeleteOneByID(id *string) error {
+	cartItem, err := r.FindOneByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Delete(&cartItem).Error
 	return err
 }
