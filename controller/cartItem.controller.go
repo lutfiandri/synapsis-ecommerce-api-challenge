@@ -48,6 +48,13 @@ func (c *cartItemController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if cartItemRequest.Quantity < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "quantity must grater than 0",
+		})
+		return
+	}
+
 	cartItem := model.CartItem{
 		UserID:    cartItemRequest.UserID,
 		ProductID: cartItemRequest.ProductID,
@@ -134,6 +141,13 @@ func (c *cartItemController) UpdateOneByID(ctx *gin.Context) {
 	err := ctx.BindJSON(&cartItemRequest)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	if cartItemRequest.Quantity < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "quantity must grater than 0",
+		})
 		return
 	}
 
