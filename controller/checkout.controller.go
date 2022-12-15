@@ -17,6 +17,7 @@ type CheckoutController interface {
 	FindOneByID(*gin.Context)
 	UpdateOneByID(*gin.Context)
 	DeleteOneByID(*gin.Context)
+	PayCheckoutByID(*gin.Context)
 }
 
 type checkoutController struct {
@@ -37,6 +38,7 @@ func (c *checkoutController) Route(router *gin.Engine) {
 	router.GET("/checkouts/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.FindOneByID)
 	router.PUT("/checkouts/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.UpdateOneByID)
 	router.DELETE("/checkouts/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.DeleteOneByID)
+	router.POST("/checkouts/pay/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.PayCheckoutByID)
 }
 
 type createRequest struct {
@@ -209,4 +211,45 @@ func (c *checkoutController) DeleteOneByID(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (c *checkoutController) PayCheckoutByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userID := ctx.GetUint("UserID")
+	userIDstr := fmt.Sprintf("%d", userID)
+
+	checkout, err := c.repository.FindOneByIDAndUserID(&id, &userIDstr)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Checkout not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	if checkout.Paid {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Already paid before",
+		})
+		return
+	}
+
+	checkout.Paid = true
+
+	err = c.repository.UpdateOneByID(&id, &checkout)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"checkout": checkout,
+	})
 }
