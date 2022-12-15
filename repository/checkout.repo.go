@@ -8,7 +8,9 @@ import (
 type CheckoutRepository interface {
 	Create(*model.Checkout) error
 	FindOneByID(*string) (model.Checkout, error)
+	FindOneByIDAndUserID(id *string, userID *string) (model.Checkout, error)
 	FindAll() ([]model.Checkout, error)
+	FindManyByUserID(*string) ([]model.Checkout, error)
 	UpdateOneByID(*string, *model.Checkout) error
 	DeleteOneByID(*string) error
 }
@@ -34,9 +36,21 @@ func (r *checkoutRepository) FindOneByID(id *string) (model.Checkout, error) {
 	return checkout, err
 }
 
+func (r *checkoutRepository) FindOneByIDAndUserID(id, userID *string) (model.Checkout, error) {
+	var checkout model.Checkout
+	err := r.db.Preload("CartItems.Product").Preload("User").First(&checkout, "id = ? AND user_id = ?", id, userID).Error
+	return checkout, err
+}
+
 func (r *checkoutRepository) FindAll() ([]model.Checkout, error) {
 	var checkouts []model.Checkout
 	err := r.db.Preload("CartItems.Product").Preload("User").Find(&checkouts).Error
+	return checkouts, err
+}
+
+func (r *checkoutRepository) FindManyByUserID(userID *string) ([]model.Checkout, error) {
+	var checkouts []model.Checkout
+	err := r.db.Preload("CartItems.Product").Preload("User").Find(&checkouts, "user_id = ?", userID).Error
 	return checkouts, err
 }
 
