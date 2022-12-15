@@ -9,6 +9,8 @@ type CheckoutRepository interface {
 	Create(*model.Checkout) error
 	FindOneByID(*string) (model.Checkout, error)
 	FindAll() ([]model.Checkout, error)
+	UpdateOneByID(*string, *model.Checkout) error
+	DeleteOneByID(*string) error
 }
 
 type checkoutRepository struct {
@@ -37,4 +39,26 @@ func (r *checkoutRepository) FindAll() ([]model.Checkout, error) {
 	var checkouts []model.Checkout
 	err := r.db.Preload("CartItems.Product").Preload("User").Find(&checkouts).Error
 	return checkouts, err
+}
+
+func (r *checkoutRepository) UpdateOneByID(id *string, newCheckout *model.Checkout) error {
+	checkout, err := r.FindOneByID(id)
+	if err != nil {
+		return err
+	}
+
+	checkout.Paid = newCheckout.Paid
+
+	err = r.db.Save(&checkout).Error
+	return err
+}
+
+func (r *checkoutRepository) DeleteOneByID(id *string) error {
+	checkout, err := r.FindOneByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Delete(&checkout).Error
+	return err
 }

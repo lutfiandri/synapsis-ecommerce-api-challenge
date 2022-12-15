@@ -14,6 +14,8 @@ type CheckoutController interface {
 	Route(*gin.Engine)
 	Create(*gin.Context)
 	FindOneByID(*gin.Context)
+	UpdateOneByID(*gin.Context)
+	DeleteOneByID(*gin.Context)
 }
 
 type checkoutController struct {
@@ -32,6 +34,8 @@ func (c *checkoutController) Route(router *gin.Engine) {
 	router.POST("/checkouts", c.Create)
 	router.GET("/checkouts", c.FindAll)
 	router.GET("/checkouts/:id", c.FindOneByID)
+	router.PUT("/checkouts/:id", c.UpdateOneByID)
+	router.DELETE("/checkouts/:id", c.DeleteOneByID)
 }
 
 type createRequest struct {
@@ -143,4 +147,60 @@ func (c *checkoutController) FindAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"checkouts": checkouts,
 	})
+}
+
+type checkoutUpdateRequest struct {
+	Paid bool
+}
+
+func (c *checkoutController) UpdateOneByID(ctx *gin.Context) {
+	var updateRequest checkoutUpdateRequest
+
+	err := ctx.BindJSON(&updateRequest)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	checkout := model.Checkout{
+		Paid: updateRequest.Paid,
+	}
+
+	id := ctx.Param("id")
+	err = c.repository.UpdateOneByID(&id, &checkout)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Checkout not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"checkout": checkout,
+	})
+}
+
+func (c *checkoutController) DeleteOneByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := c.repository.DeleteOneByID(&id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Checkout not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }
