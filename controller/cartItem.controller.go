@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/middleware"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/model"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
 	"gorm.io/gorm"
@@ -30,15 +31,14 @@ func NewCartItemController(repository *repository.CartItemRepository) CartItemCo
 }
 
 func (c *cartItemController) Route(router *gin.Engine) {
-	router.POST("/cart-items", c.Create)
-	router.GET("/cart-items/", c.FindAll)
-	router.GET("/cart-items/:id", c.FindOneByID)
-	router.PUT("/cart-items/:id", c.UpdateOneByID)
-	router.DELETE("/cart-items/:id", c.DeleteOneByID)
+	router.POST("/cart-items", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.Create)
+	router.GET("/cart-items/", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.FindAll)
+	router.GET("/cart-items/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.FindOneByID)
+	router.PUT("/cart-items/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.UpdateOneByID)
+	router.DELETE("/cart-items/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("BUYER"), c.DeleteOneByID)
 }
 
 type createCheckoutRequest struct {
-	UserID    uint `binding:"required"`
 	ProductID uint `binding:"required"`
 	Quantity  int  `binding:"required"`
 }
@@ -60,11 +60,11 @@ func (c *cartItemController) Create(ctx *gin.Context) {
 		return
 	}
 
+	userID := ctx.GetUint("UserID")
 	cartItem := model.CartItem{
-		UserID:    cartItemRequest.UserID,
+		UserID:    userID,
 		ProductID: cartItemRequest.ProductID,
 		Quantity:  cartItemRequest.Quantity,
-		// CheckoutID: sql.NullString,
 	}
 
 	err = c.repository.Create(&cartItem)
@@ -98,7 +98,10 @@ func (c *cartItemController) Create(ctx *gin.Context) {
 func (c *cartItemController) FindOneByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	cartItem, err := c.repository.FindOneByID(&id)
+	userID := ctx.GetUint("UserID")
+	userIDstr := fmt.Sprintf("%d", userID)
+
+	cartItem, err := c.repository.FindOneByIDAndUserID(&id, &userIDstr)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			ctx.JSON(http.StatusNotFound, gin.H{
@@ -118,7 +121,9 @@ func (c *cartItemController) FindOneByID(ctx *gin.Context) {
 }
 
 func (c *cartItemController) FindAll(ctx *gin.Context) {
-	cartItems, err := c.repository.FindAll()
+	userID := ctx.GetUint("UserID")
+	userIDstr := fmt.Sprintf("%d", userID)
+	cartItems, err := c.repository.FindManyByUserID(&userIDstr)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			ctx.JSON(http.StatusNotFound, gin.H{

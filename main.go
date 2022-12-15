@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/controller"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/database"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/model"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
 )
 
@@ -15,6 +17,11 @@ func main() {
 
 	dbHost, dbPort, dbUsername, dbPassword, dbDatabase := os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DATABASE")
 	db := database.NewPostgresDatabase(dbHost, dbPort, dbUsername, dbPassword, dbDatabase)
+	err := db.AutoMigrate(&model.User{}, &model.Product{}, &model.Checkout{}, &model.CartItem{})
+	if err != nil {
+		fmt.Println("Migration error")
+		panic(err.Error())
+	}
 
 	userRepository := repository.NewUserRepository(db)
 	authController := controller.NewAuthController(&userRepository)

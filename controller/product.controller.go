@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/middleware"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/model"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
 	"gorm.io/gorm"
@@ -29,11 +30,11 @@ func NewProductController(repository *repository.ProductRepository) ProductContr
 }
 
 func (c *productController) Route(router *gin.Engine) {
-	router.POST("/products", c.Create)
+	router.POST("/products", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("SELLER"), c.Create)
 	router.GET("/products", c.FindAll)
 	router.GET("/products/:id", c.FindOneByID)
-	router.PUT("/products/:id", c.UpdateOneByID)
-	router.DELETE("/products/:id", c.DeleteOneByID)
+	router.PUT("/products/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("SELLER"), c.UpdateOneByID)
+	router.DELETE("/products/:id", middleware.AuthorizeJWT(), middleware.AuthorizeUserRole("SELLER"), c.DeleteOneByID)
 }
 
 func (c *productController) Create(ctx *gin.Context) {

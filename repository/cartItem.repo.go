@@ -8,7 +8,9 @@ import (
 type CartItemRepository interface {
 	Create(*model.CartItem) error
 	FindOneByID(*string) (model.CartItem, error)
+	FindOneByIDAndUserID(id *string, userID *string) (model.CartItem, error)
 	FindAll() ([]model.CartItem, error)
+	FindManyByUserID(*string) ([]model.CartItem, error)
 	UpdateOneByID(*string, *model.CartItem) error
 	DeleteOneByID(*string) error
 }
@@ -18,7 +20,6 @@ type cartItemRepository struct {
 }
 
 func NewCartItemRepository(database *gorm.DB) CartItemRepository {
-	database.AutoMigrate(&model.CartItem{})
 	return &cartItemRepository{
 		db: database,
 	}
@@ -35,9 +36,21 @@ func (r *cartItemRepository) FindOneByID(id *string) (model.CartItem, error) {
 	return cartItem, err
 }
 
+func (r *cartItemRepository) FindOneByIDAndUserID(id, userID *string) (model.CartItem, error) {
+	var cartItem model.CartItem
+	err := r.db.Preload("User").Preload("Product").First(&cartItem, "id = ? AND user_id = ?", id, userID).Error
+	return cartItem, err
+}
+
 func (r *cartItemRepository) FindAll() ([]model.CartItem, error) {
 	var cartItems []model.CartItem
 	err := r.db.Preload("User").Preload("Product").Find(&cartItems).Error
+	return cartItems, err
+}
+
+func (r *cartItemRepository) FindManyByUserID(userID *string) ([]model.CartItem, error) {
+	var cartItems []model.CartItem
+	err := r.db.Preload("User").Preload("Product").Find(&cartItems, "user_id = ?", userID).Error
 	return cartItems, err
 }
 
