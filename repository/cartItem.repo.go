@@ -18,7 +18,6 @@ type cartItemRepository struct {
 }
 
 func NewCartItemRepository(database *gorm.DB) CartItemRepository {
-	database.AutoMigrate(&model.CartItem{})
 	return &cartItemRepository{
 		db: database,
 	}

@@ -18,7 +18,6 @@ type productRepository struct {
 }
 
 func NewProductRepository(database *gorm.DB) ProductRepository {
-	database.AutoMigrate(&model.Product{})
 	return &productRepository{
 		db: database,
 	}

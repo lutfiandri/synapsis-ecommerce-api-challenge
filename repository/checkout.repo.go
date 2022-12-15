@@ -18,7 +18,6 @@ type checkoutRepository struct {
 }
 
 func NewCheckoutRepository(database *gorm.DB) CheckoutRepository {
-	database.AutoMigrate(&model.Checkout{})
 	return &checkoutRepository{
 		db: database,
 	}
