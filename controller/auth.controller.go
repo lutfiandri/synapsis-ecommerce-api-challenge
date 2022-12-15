@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/helper"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/model"
 	"github.com/lutfiandri/synapsis-ecommerce-api-challenge/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -91,7 +92,16 @@ func (c *authController) SignIn(ctx *gin.Context) {
 		return
 	}
 
+	token, err := helper.GenerateJWT(&user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"user":        user,
+		"accessToken": token,
 	})
 }
