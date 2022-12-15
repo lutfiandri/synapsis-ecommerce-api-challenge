@@ -74,8 +74,18 @@ func (c *checkoutController) Create(ctx *gin.Context) {
 				})
 				return
 			}
+
 			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"error": err,
+				"error": err.Error(),
+			})
+			return
+		}
+
+		fmt.Println("checkout id", cartItem.CheckoutID)
+
+		if cartItem.CheckoutID != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": "Item with id " + id + " has checked out",
 			})
 			return
 		}
@@ -94,16 +104,18 @@ func (c *checkoutController) Create(ctx *gin.Context) {
 	err = c.repository.Create(&checkout)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}
 
 	// set checkoutID to each cartItem
 	for _, cartItem := range cartItems {
-		cartItemID := fmt.Sprintf("%d", checkout.ID)
+		cartItemID := fmt.Sprintf("%d", cartItem.ID)
+		cartItem.CheckoutID = &checkout.ID
 		err := c.cartItemRepository.UpdateOneByID(&cartItemID, &cartItem)
 		if err != nil {
+			fmt.Println("error here", cartItemID)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
