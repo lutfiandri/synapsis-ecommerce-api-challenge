@@ -37,17 +37,19 @@ func (c *cartItemController) Route(router *gin.Engine) {
 	router.DELETE("/cart-items/:id", c.DeleteOneByID)
 }
 
-type createRequest struct {
+type createCheckoutRequest struct {
 	UserID    uint `binding:"required"`
 	ProductID uint `binding:"required"`
 	Quantity  int  `binding:"required"`
 }
 
 func (c *cartItemController) Create(ctx *gin.Context) {
-	var cartItemRequest createRequest
+	var cartItemRequest createCheckoutRequest
 	err := ctx.BindJSON(&cartItemRequest)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -62,6 +64,7 @@ func (c *cartItemController) Create(ctx *gin.Context) {
 		UserID:    cartItemRequest.UserID,
 		ProductID: cartItemRequest.ProductID,
 		Quantity:  cartItemRequest.Quantity,
+		// CheckoutID: sql.NullString,
 	}
 
 	err = c.repository.Create(&cartItem)
