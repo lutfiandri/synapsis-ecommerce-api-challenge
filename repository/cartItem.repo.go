@@ -48,6 +48,7 @@ func (r *cartItemRepository) UpdateOneByID(id *string, newCartItem *model.CartIt
 	}
 
 	cartItem.Quantity = newCartItem.Quantity
+	cartItem.CheckoutID = newCartItem.CheckoutID
 
 	err = r.db.Save(&cartItem).Error
 	return err
